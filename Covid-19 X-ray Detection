@@ -1,0 +1,451 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Untitled0.ipynb",
+      "private_outputs": true,
+      "provenance": [],
+      "authorship_tag": "ABX9TyM/vu4PiC7uVlKvNYQ1879X",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/anderalex803/COVID-19/blob/master/Covid-19%20X-ray%20Detection\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "a2jO-pC1qnOl"
+      },
+      "source": [
+        "from google_drive_downloader import GoogleDriveDownloader as gdd\n",
+        "\n",
+        "gdd.download_file_from_google_drive(file_id='1BFc2Lt2N1swO8BKRvLMEyUhLzF52RFvr',\n",
+        "dest_path='content/covid_image_data.zip',\n",
+        "unzip=True)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "bjBF5-05q9jG"
+      },
+      "source": [
+        "import pandas as pd # Data analysis and manipultion tool\n",
+        "import numpy as np # Fundamental package for linear algebra and multidimensional arrays\n",
+        "import tensorflow as tf # Deep Learning Tool\n",
+        "import os # OS module in Python provides a way of using operating system dependent functionality\n",
+        "import cv2 # Library for image processing\n",
+        "from sklearn.model_selection import train_test_split # For splitting the data into train and validation set\n",
+        "from sklearn.metrics import f1_score\n"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "zqd-ykLkq-eN"
+      },
+      "source": [
+        "labels = pd.read_csv(\"/content/content/covid_image_data/Training_set_covid.csv\") # loading the labels\n",
+        "labels.head() # will display the first five rows in labels dataframe"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "FZRN0L7trEdO"
+      },
+      "source": [
+        "labels.tail() # will display the last five rows in labels dataframe"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "PGx5q1EBrOW4"
+      },
+      "source": [
+        "file_paths = [[fname, '/content/content/covid_image_data/train/' + fname] for fname in labels['filename']]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "OEywFgZMrjz8"
+      },
+      "source": [
+        "# Confirm if number of images is same as number of labels given\n",
+        "if len(labels) == len(file_paths):\n",
+        "  print('Number of labels i.e. ', len(labels), 'matches the number of filenames i.e. ', len(file_paths))\n",
+        "else:\n",
+        "  print('Number of labels does not match the number of filenames') "
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "nzUe35F0rnjT"
+      },
+      "source": [
+        "images = pd.DataFrame(file_paths, columns=['filename', 'filepaths'])\n",
+        "images.head()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "syDdTyMVrw9B"
+      },
+      "source": [
+        "train_data = pd.merge(images, labels, how = 'inner', on = 'filename')\n",
+        "train_data.head()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "_NX6tYL_r83Z"
+      },
+      "source": [
+        "data = [] # initialize an empty numpy array\n",
+        "image_size = 100 # image size taken is 100 here. one can take other size too\n",
+        "for i in range(len(train_data)):\n",
+        "\n",
+        "  img_array = cv2.imread(train_data['filepaths'][i], cv2.IMREAD_GRAYSCALE) # converting the image to gray scale\n",
+        "\n",
+        "  new_img_array = cv2.resize(img_array, (image_size, image_size)) # resizing the image array\n",
+        "  data.append([new_img_array, train_data['label'][i]])"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "dpWGLlu3sFTD"
+      },
+      "source": [
+        "# image pixels of a image\n",
+        "data[1]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "UcYkXdDgsR1X"
+      },
+      "source": [
+        "np.random.shuffle(data)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "cXkfqGkOsYdH"
+      },
+      "source": [
+        "data[1]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "ZB_boEGosavR"
+      },
+      "source": [
+        "x = []\n",
+        "y = []\n",
+        "for image in data:\n",
+        "  x.append(image[0])\n",
+        "  y.append(image[1])\n",
+        "\n",
+        "# converting x & y to numpy array as they are list\n",
+        "x = np.array(x)\n",
+        "y = np.array(y)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "4lix8FkIsfyv"
+      },
+      "source": [
+        "np.unique(y, return_counts=True)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "V7u5p3bPsowM"
+      },
+      "source": [
+        "# split the data\n",
+        "X_train, X_val, y_train, y_val = train_test_split(x,y,test_size=0.25, random_state = 42)\n",
+        "\n",
+        "# X_train: independent/input feature data for training the model\n",
+        "# y_train: dependent/output feature data for training the model\n",
+        "# X_test: independent/input feature data for testing the model; will be used to predict the output values\n",
+        "# y_test: original dependent/output values of X_test; We will compare this values with our predicted values to check the performance of our built model.\n",
+        "\n",
+        "# test_size = 0.30: 30% of the data will go for test set and 70% of the data will go for train set\n",
+        "# random_state = 42: this will fix the split i.e. there will be same split for each time you run the co"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "7EjK5NiYstdc"
+      },
+      "source": [
+        "# Defining the model\n",
+        "model = tf.keras.Sequential([\n",
+        "tf.keras.layers.Flatten(input_shape=(100, 100)), # flattening the image\n",
+        "tf.keras.layers.Dense(100, activation='relu'),\n",
+        "tf.keras.layers.Dense(500, activation='relu'),\n",
+        "tf.keras.layers.Dense(1, activation='sigmoid')\n",
+        "])\n",
+        "\n",
+        "model.compile(optimizer='adagrad',\n",
+        "loss='binary_crossentropy',\n",
+        "metrics=['accuracy'])\n",
+        "\n",
+        "model.fit(X_train, y_train, epochs=5, batch_size=10)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "KopesXtn2hOb"
+      },
+      "source": [
+        "from tensorflow.keras.utils import plot_model\n",
+        "plot_model(model)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "kxi0BELY31ew"
+      },
+      "source": [
+        "model.evaluate(X_val,y_val)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "_FmcIZuls0gt"
+      },
+      "source": [
+        "pred = model.predict(X_val) # predict labels for validation set\n",
+        "\n",
+        "y_pred = []\n",
+        "for item in pred:\n",
+        "  if item < 0.5:\n",
+        "    y_pred.append(0)\n",
+        "  else:\n",
+        "    y_pred.append(1)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "D2I1H-0VtVa2"
+      },
+      "source": [
+        "# check the performance\n",
+        "f1_score(y_val, y_pred)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "kuDkYPcUuHPO"
+      },
+      "source": [
+        "# Loading the order of the image's name that has been provided\n",
+        "test_image_order = pd.read_csv(\"/content/content/covid_image_data/Testing_set_covid.csv\")\n",
+        "test_image_order.head()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "O7xJkByiRlQE"
+      },
+      "source": [
+        "file_paths = [[fname, '/content/content/covid_image_data/test/' + fname] for fname in test_image_order['filename']]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "iE_uptzdRpfu"
+      },
+      "source": [
+        "# Confirm if number of images is same as number of labels given\n",
+        "if len(test_image_order) == len(file_paths):\n",
+        "  print('Number of image names i.e. ', len(test_image_order), 'matches the number of file paths i.e. ', len(file_paths))\n",
+        "else:\n",
+        "  print('Number of image names does not match the number of filepaths')"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "D8X_GrcYRuhU"
+      },
+      "source": [
+        "test_images = pd.DataFrame(file_paths, columns=['filename', 'filepaths'])\n",
+        "test_images.head()"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "WzSexSSvR27s"
+      },
+      "source": [
+        "test_pixel_data = [] # initialize an empty numpy array\n",
+        "image_size = 100 # image size taken is 100 here. one can take other size too\n",
+        "for i in range(len(test_images)):\n",
+        "\n",
+        "  img_array = cv2.imread(test_images['filepaths'][i], cv2.IMREAD_GRAYSCALE) # converting the image to gray scale\n",
+        "\n",
+        "  new_img_array = cv2.resize(img_array, (image_size, image_size)) # resizing the image array\n",
+        "\n",
+        "  test_pixel_data.append(new_img_array) "
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "EsRPnW-hR77F"
+      },
+      "source": [
+        "test_pixel_data = np.array(test_pixel_data)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "epU5ByM9SFj5"
+      },
+      "source": [
+        "pred = model.predict(test_pixel_data)\n",
+        "# The predicted values are the probabilities value\n",
+        "pred[0]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "vdLppf1rSKn3"
+      },
+      "source": [
+        "prediction = []\n",
+        "for value in pred:\n",
+        "  if value < 0.5:\n",
+        "    prediction.append(0)\n",
+        "  else:\n",
+        "    prediction.append(1)\n",
+        "\n",
+        "prediction[0]"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "rq0uejJsSYwX"
+      },
+      "source": [
+        "result = pd.DataFrame({'filename': test_images['filename'], 'label': prediction}) # prediction is nothing but the final predictions of your model on input features of your new unseen test data\n",
+        "result.to_csv(\"submission.csv\", index = False)\n",
+        "\n",
+        "# To download the csv file locally\n",
+        "from google.colab import files\n",
+        "files.download('submission.csv')"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "iVzrlkG8TEe5"
+      },
+      "source": [
+        ""
+      ],
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
